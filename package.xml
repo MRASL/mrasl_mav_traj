@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mrasl_mav_traj</name>
+  <version>0.0.0</version>
+  <description>Trajectory utilities for MAVs</description>
+
+  <maintainer email="andre-phu-van.nguyen@polymtl.ca">Andre Phu-Van Nguyen</maintainer>
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>MIT</license>
+
+  <!-- Url tags are optional, but multiple are allowed, one per tag -->
+  <!-- Optional attribute type can be: website, bugtracker, or repository -->
+  <!-- Example: -->
+  <!-- <url type="website">http://wiki.ros.org/mrasl_mav_traj</url> -->
+  <author email="andre-phu-van.nguyen@polymtl.ca">Andre Phu-Van Nguyen</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+  </export>
+</package>
