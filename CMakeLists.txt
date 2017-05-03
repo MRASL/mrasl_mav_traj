@@ -49,25 +49,26 @@ endif()
 if(USE_GUROBI)
   add_definitions(-DUSE_OOQP)
   find_package(GUROBI REQUIRED)
-  list(APPEND MAV_TRAJ_INCLUDE_DIRS ${GUROBI_INCLUDE_DIRS} ${EIGEN_GUROBI_INCLUDE_DIR})
+  include_directories(${GUROBI_INCLUDE_DIRS} ${EIGEN_GUROBI_INCLUDE_DIR})
 endif()
 if(USE_IPOPT)
   add_definitions(-DUSE_IPOPT)
   find_package(IPOPT REQUIRED)
-  list(APPEND MAV_TRAJ_INCLUDE_DIRS ${IPOPT_INCLUDE_DIRS})
+  include_directories(${IPOPT_INCLUDE_DIRS})
 endif()
 if(USE_QPOASES)
   add_definitions(-DUSE_QPOASES)
   find_package(qpOASES REQUIRED)
-  list(APPEND MAV_TRAJ_INCLUDE_DIRS ${QPOASES_INCLUDE_DIR})
+  include_directories(${QPOASES_INCLUDE_DIR})
 endif()
 if(USE_NLOPT)
   add_definitions(-DUSE_NLOPT)
   find_package(Nlopt REQUIRED)
-  list(APPEND MAV_TRAJ_INCLUDE_DIRS ${NLOPT_INCLUDE_DIRS})
+  include_directories(${NLOPT_INCLUDE_DIRS})
 endif()
-list(APPEND MAV_TRAJ_INCLUDE ${catkin_INCLUDE_DIRS})  # Do this after finding all packages
-include_directories(MAV_TRAJ_INCLUDE)
+include_directories(include)
+include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
 
 ## Declare a C++ library
 add_library(alglib
@@ -81,11 +82,19 @@ add_library(alglib
 target_include_directories(alglib PUBLIC include/alglib)
 target_compile_definitions(alglib PUBLIC -DAE_CPU=AE_INTEL)
 
+add_library(${PROJECT_NAME}
+  src/${PROJECT_NAME}/TrajectoryMath.cpp
+  src/${PROJECT_NAME}/TrajectoryConstraint.cpp
+  src/${PROJECT_NAME}/TrajectorySegment.cpp
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
@@ -121,35 +130,28 @@ target_compile_definitions(alglib PUBLIC -DAE_CPU=AE_INTEL)
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ${PROJECT_NAME} #${PROJECT_NAME}_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
-
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mrasl_mav_traj.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+catkin_add_gtest(${PROJECT_NAME}-test
+  test/test_main.cpp
+  test/test_trajectory_math.cpp
+)
+if(TARGET ${PROJECT_NAME}-test)
+  target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+endif()
