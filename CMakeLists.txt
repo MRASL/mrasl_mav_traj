@@ -3,7 +3,7 @@ project(mrasl_mav_traj)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-option(USE_OOQP     "Compile with OOQP"     OFF)
+option(USE_OOQP     "Compile with OOQP"     ON)
 option(USE_GUROBI   "Compile with GUROBI"   OFF)
 option(USE_IPOPT    "Compile with Ipot"     OFF)
 option(USE_QPOASES  "Compile with qpOASES"  OFF)
@@ -45,6 +45,8 @@ set(MAV_TRAJ_INCLUDE_DIRS include)
 if(USE_OOQP)
   add_definitions(-DUSE_OOQP)
   find_package(catkin REQUIRED COMPONENTS ooqp_eigen_interface)
+  set(OOQP_LIBS ooqpbase ooqpdense ooqpgensparse ooqpmehrotra ooqpbound
+          ooqpgendense ooqpgondzio ooqpsparse blas ma27 gfortran)
 endif()
 if(USE_GUROBI)
   add_definitions(-DUSE_OOQP)
@@ -86,7 +88,7 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/TrajectoryMath.cpp
   src/${PROJECT_NAME}/TrajectoryConstraint.cpp
   src/${PROJECT_NAME}/TrajectorySegment.cpp
-)
+        src/mrasl_mav_traj/TrajectoryGenerator.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -95,6 +97,12 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
+if(USE_OOQP)
+  target_link_libraries(${PROJECT_NAME} ${OOQP_LIBS})
+endif()
+
+
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
@@ -151,6 +159,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(${PROJECT_NAME}-test
   test/test_main.cpp
   test/test_trajectory_math.cpp
+  test/test_trajectory_generation.cpp
 )
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})

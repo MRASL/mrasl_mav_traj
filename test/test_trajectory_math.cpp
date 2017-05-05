@@ -170,3 +170,18 @@ TEST(traj_math, segmenttimerealloc) {
   VectorXd answer = segtimeRealloc(arrival_times, delta);
   ASSERT_TRUE(answer.isApprox(expected));
 }
+
+TEST(traj_math, matrixconcat) {
+  MatrixXd A(2,3), B(3,3), K(5, 5);
+  A << 1, 1, 1, 2, 2, 2;
+  B.fill(3);
+  K << B, A.transpose(), A, MatrixXd::Zero(2,2);
+
+  MatrixXd expected(5,5);
+  expected << 3, 3, 3, 1, 2,
+              3, 3, 3, 1, 2,
+              3, 3, 3, 1, 2,
+              1, 1, 1, 0, 0,
+              2, 2, 2, 0, 0;
+  ASSERT_TRUE(K.isApprox(expected));
+}
