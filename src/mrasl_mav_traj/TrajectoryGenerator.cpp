@@ -30,8 +30,9 @@
 #include <Eigen/Sparse>
 
 #include <alglib/optimization.h>
+#ifdef USE_OOQP
 #include <ooqp_eigen_interface/OoqpEigenInterface.hpp>
-
+#endif
 #include <mrasl_mav_traj/TrajectoryConstraint.hpp>
 #include <iostream>
 #include "mrasl_mav_traj/TrajectorySegment.hpp"
@@ -185,13 +186,21 @@ namespace mrasl {
                 result = solveProblemOoqp(dim);
                 break;
             case Solver::LINEAR_SOLVE:
-                result = solveProblemCholesky(dim);
+                result = solveProblemLU(dim);
+                break;
+            case Solver::BLEIC:
+                result = solveProblemBLEIC(dim);
                 break;
             default:
+                throw std::invalid_argument("Unsupported solver.");
                 result = false;
                 break;
         }
 
+        // if optimization worked i.e. solution might have changed, need to
+        // rediscretize
+        if(result)
+            isDiscretized_ = false;
         return result;
     }
 
@@ -202,6 +211,7 @@ namespace mrasl {
          *  the OoqpEigenInterface::solve function.
          *  Find x: min 1/2 x' Q x + c' x such that A x = b, d <= Cx <= f, and l <= x <= u
          */
+#ifdef USE_OOQP
         SparseMatrix<double, RowMajor> Q = getCostMatrix(dim).sparseView();
         // We have no linear term
         VectorXd c = VectorXd::Zero(getCostMatrix(dim).rows());
@@ -219,9 +229,98 @@ namespace mrasl {
         //std::cout << "iterations: " << ooqpei::OoqpEigenInterface::getNumIters() << std::endl;
         //std::cout << "exec time: " << time << std::endl;
         return result;
+#else
+        throw std::logic_error("mrasl_mav_traj not build with OOQP");
+#endif
     }
 
-    bool TrajectoryGenerator::solveProblemCholesky(int dim) {
+    bool TrajectoryGenerator::solveProblemBLEIC(int dim) {
+        int n_constr = getConstraintVector(dim).size();
+        int n_vars = H_[dim].cols();
+
+        // Copy A (H) matrix Hessian
+        alglib::real_2d_array A;
+        A.setlength(H_[dim].rows(), H_[dim].cols());
+        for(int col = 0; col < H_[dim].cols(); ++col) {
+            for(int row = 0; row < H_[dim].rows(); ++row) {
+                A(row, col) = H_[dim](row, col);
+            }
+        }
+
+        // linear term
+        alglib::real_1d_array b;
+        b.setlength(H_[dim].rows());
+        for(int row = 0; row < H_[dim].rows(); ++row) {
+            b(row) = 0;
+        }
+
+        // Constraint matrix
+        auto Aeq = getConstraintMatrix(dim);
+        auto beq = getConstraintVector(dim);
+        alglib::real_2d_array c;
+        c.setlength(Aeq.rows(), Aeq.cols()+1);
+        for(int col = 0; col < Aeq.cols(); ++col) {
+            for(int row = 0; row < Aeq.rows(); ++row) {
+                c(row, col) = Aeq(row, col);
+            }
+        }
+        for(int row = 0; row < beq.rows(); ++row) {
+            c(row, Aeq.cols()) = beq(row);
+        }
+
+        // Constraint type
+        alglib::integer_1d_array ct;
+        ct.setlength(n_constr);
+        for(int row = 0; row < n_constr; ++row) {
+            ct(row) = 0;
+        }
+        alglib::minqpstate state;
+        alglib::minqpreport rep;
+
+        // create solver and set quadratic/linear terms
+        alglib::minqpcreate(n_vars, state);
+        alglib::minqpsetquadraticterm(state, A);
+        alglib::minqpsetlinearterm(state, b);
+        alglib::minqpsetlc(state, c, ct);
+
+        // set scale
+        alglib::real_1d_array s;
+        s.setlength(n_vars);
+        for(int row = 0; row < n_vars; ++row){
+            s(row) = 1;
+        }
+        alglib::minqpsetscale(state, s);
+
+        // solve problem
+        alglib::minqpsetalgobleic(state, 0.0, 0.0, 0.0, 0);
+        alglib::real_1d_array x;/*
+        auto started = std::chrono::high_resolution_clock::now();*/
+        alglib::minqpoptimize(state);/*
+        auto done = std::chrono::high_resolution_clock::now();
+        long time = std::chrono::duration_cast<std::chrono::nanoseconds>(done-started).count();
+        exec_times_.push_back(time);*/
+        alglib::minqpresults(state, x, rep);
+
+#ifdef DEBUG
+        std::cout << "report" << std::endl;
+        std::cout << "\touter iters " << rep.outeriterationscount << std::endl;
+        std::cout << "\tinner iters " << rep.inneriterationscount << std::endl;
+        std::cout << "\tncholesky   " << rep.ncholesky << std::endl;
+        std::cout << "\ttermination " << rep.terminationtype << std::endl;
+        std::cout << "\tnum mv      " << rep.nmv << std::endl;
+#endif
+
+        // copy solution
+        Eigen::VectorXd solution(n_vars);
+        for(int row = 0; row < n_vars; ++row) {
+            solution(row) = x(row);
+        }
+        solution_[dim] = solution;
+
+        return rep.terminationtype >= 0;
+    }
+
+    bool TrajectoryGenerator::solveProblemLU(int dim) {
         /**
          * build the KKT conditions
          * We want to solve

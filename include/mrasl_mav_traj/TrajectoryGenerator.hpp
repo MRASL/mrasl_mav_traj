@@ -36,7 +36,7 @@ using namespace Eigen;
 namespace mrasl {
     class TrajectoryGenerator {
     public:
-        enum Solver {OOQP, LINEAR_SOLVE};
+        enum Solver {OOQP, BLEIC, LINEAR_SOLVE};
         TrajectoryGenerator();
 
         /****************************
@@ -187,7 +187,8 @@ namespace mrasl {
          * Solver calls
          ****************************/
         bool solveProblemOoqp(int dim);
-        bool solveProblemCholesky(int dim);
+        bool solveProblemBLEIC(int dim);
+        bool solveProblemLU(int dim);
 
         /**
          * Build the cost matrix for a certain dimension dim

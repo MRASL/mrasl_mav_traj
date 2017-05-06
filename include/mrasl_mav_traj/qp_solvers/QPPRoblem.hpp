@@ -27,6 +27,10 @@
 #ifndef QPPROBLEM_HPP
 #define QPPROBLEM_HPP
 
+#include <Eigen/core>
+
+using namespace Eigen;
+
 namespace mrasl {
 /*******************************************************************************
  *  QPProblem is a class that helps formulate QP problems with linear
@@ -35,22 +39,39 @@ namespace mrasl {
  *   x
  *  s.t. Ax = b
  ******************************************************************************/
-class QPProblem {
-public:
+    class QPProblem {
+    public:
 
-  /**
-   * Constructor
-   * @param n   Number of variables
-   * @param m   Number of constraints
-   */
-  QPProblem(const unsigned int n,
-            const unsigned int m);
-  ~QPProblem();
+        /**
+         * Constructor
+         * @param H Hessian
+         * @param c Linear term
+         * @param A Linear constraint matrix
+         * @param b Linear constraint vector
+         */
+        QPProblem(const MatrixXd H, const VectorXd c, const MatrixXd A,
+                  const VectorXd b);
 
-private:
+        /**
+         * Constructor where linear term is zero
+         * @param H Hessian
+         * @param A Linear constraint matrix
+         * @param b Linear constraint vector
+         */
+        QPProblem(const MatrixXd H, const MatrixXd A, const VectorXd b);
+        ~QPProblem(){};
 
-  QPProblem();
-};
+        virtual bool solve() = 0;
+
+        VectorXd getSolution(){ return solution_; }
+    private:
+        QPProblem();
+
+    protected:
+        const MatrixXd H_, A_;
+        const VectorXd c, b;
+        VectorXd solution_;
+    };
 }
 
 #endif // QPPROBLEM_HPP
