@@ -29,8 +29,8 @@
 #include <Eigen/Core>
 #include "mrasl_mav_traj/TrajectoryGenerator.hpp"
 #include "mrasl_mav_traj/TimeAllocator.hpp"
-#include "mrasl_mav_traj/nlp_solvers/NLPalg.hpp"
-#include "mrasl_mav_traj/nlp_solvers/NLPnlopt.hpp"
+#include "mrasl_mav_traj/Solvers.hpp"
+
 
 using namespace mrasl;
 using namespace Eigen;

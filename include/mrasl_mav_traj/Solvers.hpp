@@ -28,6 +28,9 @@
  #ifndef SOLVERS_HPP
  #define SOLVERS_HPP
 
+// ALG is always supported
+ #include "mrasl_mav_traj/nlp_solvers/NLPalg.hpp"
+
  #ifdef USE_OOQP
 
  #endif // USE_OOQP
@@ -41,7 +44,7 @@
 
  #endif // USE_QPOASES
  #ifdef USE_NLOPT
-
+# include "mrasl_mav_traj/nlp_solvers/NLPnlopt.hpp"
  #endif // USE_NLOPT
 
  #endif // SOLVERS_HPP
