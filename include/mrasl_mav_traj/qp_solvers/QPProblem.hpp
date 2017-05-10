@@ -27,7 +27,7 @@
 #ifndef QPPROBLEM_HPP
 #define QPPROBLEM_HPP
 
-#include <Eigen/core>
+#include <Eigen/Core>
 
 using namespace Eigen;
 
@@ -68,8 +68,8 @@ namespace mrasl {
         QPProblem();
 
     protected:
-        const MatrixXd H_, A_;
-        const VectorXd c, b;
+        MatrixXd H_, A_;
+        VectorXd c_, b_;
         VectorXd solution_;
     };
 }

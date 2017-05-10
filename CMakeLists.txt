@@ -3,11 +3,11 @@ project(mrasl_mav_traj)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-option(USE_OOQP     "Compile with OOQP"     ON)
+option(USE_OOQP     "Compile with OOQP"     OFF)
 option(USE_GUROBI   "Compile with GUROBI"   OFF)
 option(USE_IPOPT    "Compile with Ipot"     OFF)
 option(USE_QPOASES  "Compile with qpOASES"  OFF)
-option(USE_NLOPT    "Compile with NLopt"    OFF)
+option(USE_NLOPT    "Compile with NLopt"    ON)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++11)
@@ -88,7 +88,10 @@ add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/TrajectoryMath.cpp
   src/${PROJECT_NAME}/TrajectoryConstraint.cpp
   src/${PROJECT_NAME}/TrajectorySegment.cpp
-        src/mrasl_mav_traj/TrajectoryGenerator.cpp)
+  src/${PROJECT_NAME}/TrajectoryGenerator.cpp
+  src/${PROJECT_NAME}/qp_solvers/QPProblem.cpp
+  src/${PROJECT_NAME}/nlp_solvers/NLPalg.cpp
+  src/${PROJECT_NAME}/nlp_solvers/NLPnlopt.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -100,6 +103,9 @@ target_link_libraries(${PROJECT_NAME}
 )
 if(USE_OOQP)
   target_link_libraries(${PROJECT_NAME} ${OOQP_LIBS})
+endif()
+if(USE_NLOPT)
+  target_link_libraries(${PROJECT_NAME} ${NLOPT_LIBRARIES})
 endif()
 
 
@@ -161,6 +167,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
   test/test_main.cpp
   test/test_trajectory_math.cpp
   test/test_trajectory_generation.cpp
+  test/test_time_allocation.cpp
 )
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
