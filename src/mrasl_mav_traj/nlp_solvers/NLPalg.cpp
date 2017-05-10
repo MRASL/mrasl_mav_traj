@@ -32,6 +32,7 @@
 
 namespace mrasl {
     int NLPalg::func_evals_ = 0;
+
     NLPalg::NLPalg(generator_solver_pair_t pair) : TimeAllocator(pair){}
 
     bool NLPalg::optimize() {

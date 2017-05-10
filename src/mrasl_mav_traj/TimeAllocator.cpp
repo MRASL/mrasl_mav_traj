@@ -21,34 +21,21 @@
  ******************************************************************************/
 
 /**
- * @file Solvers.hpp
+ * @file TimeAllocator.cpp
  * @author Andre Phu-Van Nguyen <andre-phu-van.nguyen@polymtl.ca>
  **/
 
- #ifndef SOLVERS_HPP
- #define SOLVERS_HPP
+#include "mrasl_mav_traj/TimeAllocator.hpp"
 
-// ALG is always supported
- #include <alglib/optimization.h>
- #include "mrasl_mav_traj/nlp_solvers/NLPalg.hpp"
+namespace mrasl {
+  constexpr double TimeAllocator::h_;
+  TimeAllocator::TimeAllocator(generator_solver_pair_t pair) : pair_(pair) {}
 
- #ifdef USE_OOQP
- # include <ooqp_eigen_interface/OoqpEigenInterface.hpp>
- #endif // USE_OOQP
- #ifdef USE_GUROBI
-
- #endif // USE_GUROBI
- #ifdef USE_GUROBI
-
- #endif // USE_GUROBI
- #ifdef USE_QPOASES
-
- #endif // USE_QPOASES
-#ifdef USE_IPOPT
-#include "mrasl_mav_traj/nlp_solvers/NLPipopt.hpp"
-#endif // USEI_IPOPT
- #ifdef USE_NLOPT
- # include "mrasl_mav_traj/nlp_solvers/NLPnlopt.hpp"
- #endif // USE_NLOPT
-
- #endif // SOLVERS_HPP
+  Eigen::MatrixXd TimeAllocator::generateGi(const int m) {
+    MatrixXd mat(m,m);
+    mat.fill(-1.0/(m-1));
+    for(int i = 0; i < m; ++i)
+      mat(i,i) = 1;
+    return mat;
+  }
+}

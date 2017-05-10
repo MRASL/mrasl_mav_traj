@@ -5,10 +5,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 option(USE_OOQP     "Compile with OOQP"     OFF)
 option(USE_GUROBI   "Compile with GUROBI"   OFF)
-option(USE_IPOPT    "Compile with Ipot"     OFF)
+option(USE_IPOPT    "Compile with Ipot"     ON)
 option(USE_QPOASES  "Compile with qpOASES"  OFF)
 option(USE_NLOPT    "Compile with NLopt"    ON)
-
+SET(USE_IPOPT ON)
+SET(USE_NLOPT ON)
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++11)
 
@@ -42,6 +43,16 @@ catkin_package(
 ## Build ##
 ###########
 set(MAV_TRAJ_INCLUDE_DIRS include)
+set(MAV_TRAJ_SRC )
+LIST(APPEND MAV_TRAJ_SRC
+  src/${PROJECT_NAME}/TrajectoryMath.cpp
+  src/${PROJECT_NAME}/TrajectoryConstraint.cpp
+  src/${PROJECT_NAME}/TrajectorySegment.cpp
+  src/${PROJECT_NAME}/TrajectoryGenerator.cpp
+  src/${PROJECT_NAME}/TimeAllocator.cpp
+  src/${PROJECT_NAME}/qp_solvers/QPProblem.cpp
+  src/${PROJECT_NAME}/nlp_solvers/NLPalg.cpp
+)
 if(USE_OOQP)
   add_definitions(-DUSE_OOQP)
   find_package(catkin REQUIRED COMPONENTS ooqp_eigen_interface)
@@ -57,6 +68,7 @@ if(USE_IPOPT)
   add_definitions(-DUSE_IPOPT)
   find_package(IPOPT REQUIRED)
   include_directories(${IPOPT_INCLUDE_DIRS})
+  LIST(APPEND MAV_TRAJ_SRC src/${PROJECT_NAME}/nlp_solvers/NLPipopt.cpp)
 endif()
 if(USE_QPOASES)
   add_definitions(-DUSE_QPOASES)
@@ -67,6 +79,7 @@ if(USE_NLOPT)
   add_definitions(-DUSE_NLOPT)
   find_package(Nlopt REQUIRED)
   include_directories(${NLOPT_INCLUDE_DIRS})
+  LIST(APPEND MAV_TRAJ_SRC src/${PROJECT_NAME}/nlp_solvers/NLPnlopt.cpp)
 endif()
 include_directories(include)
 include_directories(${catkin_INCLUDE_DIRS})
@@ -85,17 +98,8 @@ target_include_directories(alglib PUBLIC include/alglib)
 target_compile_definitions(alglib PUBLIC -DAE_CPU=AE_INTEL)
 
 add_library(${PROJECT_NAME}
-  src/${PROJECT_NAME}/TrajectoryMath.cpp
-  src/${PROJECT_NAME}/TrajectoryConstraint.cpp
-  src/${PROJECT_NAME}/TrajectorySegment.cpp
-  src/${PROJECT_NAME}/TrajectoryGenerator.cpp
-  src/${PROJECT_NAME}/qp_solvers/QPProblem.cpp
-  src/${PROJECT_NAME}/nlp_solvers/NLPalg.cpp
-  src/${PROJECT_NAME}/nlp_solvers/NLPnlopt.cpp)
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
+  ${MAV_TRAJ_SRC}
+)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -107,9 +111,9 @@ endif()
 if(USE_NLOPT)
   target_link_libraries(${PROJECT_NAME} ${NLOPT_LIBRARIES})
 endif()
-
-
-
+if(USE_IPOPT)
+  target_link_libraries(${PROJECT_NAME} ${IPOPT_LIBRARIES})
+endif()
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide

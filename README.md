@@ -2,17 +2,18 @@
 
 Trajectory utilities for MAVs
 
-The trunk of this work was done by Andre Phu-Van Nguyen <andre-phu-van.nguyen@polymtl.ca> 
+The trunk of this work was done by Andre Phu-Van Nguyen <andre-phu-van.nguyen@polymtl.ca>
 as part of the class MTH8404: Méthodes d'optimisation et contrôle optimal.
 
-Currently it is a reimplementation of the trajectory generation part of the paper 
-*Minimum Snap Trajectory Generation and Control for Quadrotors* by Daniel 
-Mellinger and Vijay Kumar [3]. With inspiration from Adam P. Bry's PhD thesis [1] and a paper
-by Richter and al. on Polynomial Trajectory Planning [2].
+Currently it is a reimplementation of the trajectory generation part of the
+paper *Minimum Snap Trajectory Generation and Control for Quadrotors* by Daniel
+Mellinger and Vijay Kumar [3]. With inspiration from Adam P. Bry's PhD
+thesis [1] and a paper by Richter and al. on Polynomial Trajectory Planning [2].
 
-This package supports multiple Quadratic Programming and Non-Linear Programming solvers for comparison
-purposes including OOQP, qpOASES, Ipopt, ALGLIB's BLEIC and Gurobi. For development purposes, a first implementation
-war written in Matlab using the quadprog and fmincon solvers.
+This package supports multiple Quadratic Programming and Non-Linear Programming
+solvers for comparison purposes including OOQP, qpOASES, Ipopt, ALGLIB's BLEIC
+and Gurobi. For development purposes, a first implementation was written in
+Matlab using the quadprog and fmincon solvers.
 
 # Building
 TODO

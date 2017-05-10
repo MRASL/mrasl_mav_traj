@@ -29,10 +29,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-#include <alglib/optimization.h>
-#ifdef USE_OOQP
-#include <ooqp_eigen_interface/OoqpEigenInterface.hpp>
-#endif
+#include <mrasl_mav_traj/Solvers.hpp>
 #include <mrasl_mav_traj/TrajectoryConstraint.hpp>
 #include <iostream>
 #include "mrasl_mav_traj/TrajectorySegment.hpp"

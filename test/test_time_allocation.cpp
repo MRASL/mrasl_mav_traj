@@ -65,6 +65,7 @@ TEST(time_allocation, tesl_alg) {
   EXPECT_DOUBLE_EQ(expected[3], solution(3));  // Accept rounding errors
 }
 
+#ifdef USE_NLOPT
 TEST(time_allocation, tesl_nlopt) {
   Vector3d wp0, wp1, wp2, wp3;
   wp0 << 0, 0, 0;
@@ -94,3 +95,36 @@ TEST(time_allocation, tesl_nlopt) {
   EXPECT_NEAR(expected[2], solution(2), 1e-2);
   EXPECT_DOUBLE_EQ(expected[3], solution(3));  // Accept rounding errors
 }
+#endif
+
+#ifdef USE_IPOPT
+TEST(time_allocation, tesl_ipopt) {
+  Vector3d wp0, wp1, wp2, wp3;
+  wp0 << 0, 0, 0;
+  wp1 << 1, 0, 0;
+  wp2 << 1, 2, 0;
+  wp3 << 0, 2, 0;
+
+  TrajectoryGenerator *tg = new TrajectoryGenerator();
+  tg->addConstraint(
+      TrajectoryConstraint(0, wp0, Vector3d::Zero(), Vector3d::Zero(),
+                           Vector3d::Zero(), Vector3d::Zero()));
+  tg->addConstraint(TrajectoryConstraint(0.5, wp1));
+  tg->addConstraint(TrajectoryConstraint(2.5, wp2));
+  tg->addConstraint(
+      TrajectoryConstraint(3, wp3, Vector3d::Zero(), Vector3d::Zero(),
+                           Vector3d::Zero(), Vector3d::Zero()));
+
+  TimeAllocator::generator_solver_pair_t gsp;
+  gsp.tg = tg;
+  gsp.solver = TrajectoryGenerator::Solver::LINEAR_SOLVE;
+  TimeAllocator *ta = new NLPipopt(gsp);
+  ta->optimize();
+  VectorXd solution = tg->getArrivalTimes();
+  double expected[] = {0.0,	0.975874415288207,	2.02418446511101,	3.0};
+  EXPECT_DOUBLE_EQ(expected[0], solution(0));
+  EXPECT_NEAR(expected[1], solution(1), 1e-2);  // We're not as good as quadprog
+  EXPECT_NEAR(expected[2], solution(2), 1e-2);
+  EXPECT_DOUBLE_EQ(expected[3], solution(3));  // Accept rounding errors
+}
+#endif
