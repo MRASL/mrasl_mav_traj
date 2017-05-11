@@ -47,14 +47,16 @@ namespace mrasl {
     }
     app->Options()->SetStringValue("hessian_approximation", "limited-memory");
     app->Options()->SetStringValue("limited_memory_update_type", "bfgs");
+    app->Options()->SetIntegerValue("max_iter", 10);
+    app->Options()->SetIntegerValue("print_level", 0);
     status = app->OptimizeTNLP(nlp);
   }
 
   bool NLPipopt::get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g,
                               Ipopt::Index& nnz_h_lag, IndexStyleEnum& index_style) {
     n = pair_.tg->getNumWaypoints() - 1;
-    m = 1;
-    nnz_jac_g = n;
+    m = 1;          // One constraint
+    nnz_jac_g = n;  // Ones everywhere, one for each variable
     nnz_h_lag = n;  // Don't know
     index_style = C_STYLE;
     return true;
@@ -65,7 +67,7 @@ namespace mrasl {
     assert(n == pair_.tg->getNumWaypoints() - 1);
     assert(m == 1);
 
-    // All segment times have to be positive
+    // All segment times have to be positive or 0.0
     for(int i = 0; i < n; ++i) {
       x_l[i] = 0.0;
       x_u[i] = IPOPT_INFINITY;
@@ -73,6 +75,7 @@ namespace mrasl {
 
     // Sum of segment times has to equal last arrival time
     g_l[0] = g_u[0] = pair_.tg->getArrivalTimes()(n);
+    //std::cout << "g_l " << g_l[0] << std::endl;
 
     return true;
   }
@@ -103,6 +106,8 @@ namespace mrasl {
     pair_.tg->setArrivalTimes(arrival_times);
     pair_.tg->solveProblem(pair_.solver);
     obj_value = pair_.tg->getObjectiveFuncVal();
+
+    return true;
   }
 
   bool NLPipopt::eval_grad_f( Ipopt::Index n, const Number *x, bool new_x,
@@ -136,7 +141,7 @@ namespace mrasl {
       sum += x[i];
     }
     g[0] = sum;
-
+    //std::cout << "eval g " << sum <<std::endl;
     return true;
   }
 
@@ -154,6 +159,7 @@ namespace mrasl {
         values[i] = 1;
       }
     }
+    return true;
   }
 
   bool NLPipopt::eval_h(Ipopt::Index n, const Number *x, bool new_x,
