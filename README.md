@@ -16,10 +16,78 @@ and Gurobi. For development purposes, a first implementation was written in
 Matlab using the quadprog and fmincon solvers.
 
 # Building
-TODO
+Before building, you have to pick which solvers you are going to use. The `CMakeLists.txt` file contains options at the top for supported solvers that you might need to install if you want to use them. The best conbination of solvers is probably the Eigen's LU for the simple solve and IPOPT for the time allocation.
 
 # Usage
-TODO
+There are example usages in the tests folder. 
+
+## Building the problem
+For example, if you want to build a slalom path
+```c++
+Vector3d wp1, wp2, wp3, wp4, wp5, wp6, wp7;
+wp1 << 0,   0,  1.5;
+wp2 << 1,   1,  1;
+wp3 << 0,   2,  2;
+wp4 << -1,  3,  1;
+wp5 << 0,   4,  2;
+wp6 << 1,   5,  1;
+wp7 << 0,   6,  1.5;
+
+TrajectoryConstraint tc1(0, wp1, Vector3d::Zero(), Vector3d::Zero(),
+                         Vector3d::Zero(), Vector3d::Zero());
+TrajectoryConstraint tc2(1, wp2);
+TrajectoryConstraint tc3(2, wp3);
+TrajectoryConstraint tc4(3, wp4);
+TrajectoryConstraint tc5(4, wp5);
+TrajectoryConstraint tc6(5, wp6);
+TrajectoryConstraint tc7(6, wp7, Vector3d::Zero(), Vector3d::Zero(),
+                         Vector3d::Zero(), Vector3d::Zero());
+
+TrajectoryGenerator *tg = new TrajectoryGenerator();
+tg->addConstraint(tc1);
+tg->addConstraint(tc2);
+tg->addConstraint(tc3);
+tg->addConstraint(tc4);
+tg->addConstraint(tc5);
+tg->addConstraint(tc6);
+tg->addConstraint(tc7);
+```
+In this example we constrain the start and end positions to have zero velocity, acceleration, jerk and snap, all other waypoints are only constrained in position. The first argument of the `TrajectoryConstraint` constructor is the arrival time of the waypoint.
+
+## Simple solve
+One you have built your problem you can solve it by calling:
+```c++
+tg->solveProblem(TrajectoryGenerator::Solver::LINEAR_SOLVE);
+```
+The solveProblem function takes as input a solving method, since our quadratic problems are only equality constrained, it is possible to solve them using LU decomposition instead of optimization. Nonetheless, OOQP and ALGLIB's BLEIC are also supported.
+
+## Solve with time optimal segments
+Mellinger shows that you can keep the total flight time and optimize the time allocation for each segment between waypoints. We support 3 solvers for this problem: IPOPT, NLopt and ALGLIB's BLEIC. For example:
+```c++
+Vector3d wp0, wp1, wp2, wp3;
+wp0 << 0, 0, 0;
+wp1 << 1, 0, 0;
+wp2 << 1, 2, 0;
+wp3 << 0, 2, 0;
+
+TrajectoryGenerator *tg = new TrajectoryGenerator();
+tg->addConstraint(
+    TrajectoryConstraint(0, wp0, Vector3d::Zero(), Vector3d::Zero(),
+                         Vector3d::Zero(), Vector3d::Zero()));
+tg->addConstraint(TrajectoryConstraint(0.5, wp1));
+tg->addConstraint(TrajectoryConstraint(2.5, wp2));
+tg->addConstraint(
+  TrajectoryConstraint(3, wp3, Vector3d::Zero(), Vector3d::Zero(),
+                       Vector3d::Zero(), Vector3d::Zero()));
+
+TimeAllocator::generator_solver_pair_t gsp;
+gsp.tg = tg;
+gsp.solver = TrajectoryGenerator::Solver::LINEAR_SOLVE;
+TimeAllocator *ta = new NLPnlopt(gsp);
+ta->optimize();
+VectorXd solution = tg->getArrivalTimes();
+```
+
 
 # References
 1. A. P. Bry. *Control, estimation, and planning algorithms for aggressive flight using onboard sensing*. PhD thesis, Citeseer, 2012.
