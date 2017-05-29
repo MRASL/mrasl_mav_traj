@@ -88,6 +88,9 @@ ta->optimize();
 VectorXd solution = tg->getArrivalTimes();
 ```
 
+# Todo
+* Support for scale factor
+  * Mellinger shows that the solution we get after optimization is for nondimentionalized time, so you can take the end solution and scale it in time if you want to reduce velocity/acceleration/jerk/snap demanded on the vehicle. The Matlab implementation supports this but the C++ doesn't. To support this we need to allow the `TimeSegment` class to change the value of `alpha_` after construction and add the time scale coefficient as a parameter to all discretization functions in `TimeSegment` and `TrajectoryGenerator`.
 
 # References
 1. A. P. Bry. *Control, estimation, and planning algorithms for aggressive flight using onboard sensing*. PhD thesis, Citeseer, 2012.
