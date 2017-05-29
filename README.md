@@ -15,6 +15,10 @@ solvers for comparison purposes including OOQP, qpOASES, Ipopt, ALGLIB's BLEIC
 and Gurobi. For development purposes, a first implementation was written in
 Matlab using the quadprog and fmincon solvers.
 
+# Background theory
+For the general mathematical basis behind this method read all 3 references in the references section. For a bit more details
+on the implementation read my final project report in the `doc` folder.
+
 # Building
 Before building, you have to pick which solvers you are going to use. The `CMakeLists.txt` file contains options at the top for supported solvers that you might need to install if you want to use them. The best conbination of solvers is probably the Eigen's LU for the simple solve and IPOPT for the time allocation.
 
